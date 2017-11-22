@@ -88,7 +88,7 @@ This command will read data from <code>dataset/gen\_samples.csv</code> and calcu
 
 * Recognition Accuracy of DNN Classifier:
 
-<img src="img/dnn-accuracy.png" width="300px" height="200px">
+<center><img src="img/dnn-accuracy.png" width="300px" height="200px"></center>
 
 * D_loss of GAN:
 
