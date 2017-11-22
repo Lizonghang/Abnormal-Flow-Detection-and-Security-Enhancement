@@ -1,0 +1,8 @@
+# Data
+dataset
+*.tar
+
+# Trash
+*.pyc
+*.DS_Store
+.idea
