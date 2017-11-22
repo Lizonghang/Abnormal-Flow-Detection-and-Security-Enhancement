@@ -16,7 +16,7 @@ flags.DEFINE_string("checkpoint_dir", "dnn_ckpt", "Dir to save the checkpoint fi
 flags.DEFINE_string("log_dir", "dnn_logs", "Dir to save te logs")
 flags.DEFINE_boolean("train", False, "True for training")
 flags.DEFINE_boolean("predict", False, "True for predicting")
-flags.DEFINE_boolean("eval", True, "True for eval")
+flags.DEFINE_boolean("eval", False, "True for eval")
 FLAGS = flags.FLAGS
 
 

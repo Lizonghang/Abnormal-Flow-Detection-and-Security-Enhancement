@@ -70,10 +70,18 @@ class DNN(object):
                 batch_labels = train_label[batch_idx * self.FLAGS.batch_size: (batch_idx + 1) * self.FLAGS.batch_size]
                 self.sess.run(train_op, feed_dict={inputs: batch_samples, labels: batch_labels})
 
-            acc, sum_op = self.sess.run([accuracy, summary_op], feed_dict={inputs: test_data, labels: test_label})
-            saver.save(self.sess, os.path.join(self.FLAGS.checkpoint_dir, 'dnn.ckpt'), global_step=self.sess.run(global_step))
-            writer.add_summary(sum_op, global_step=self.sess.run(global_step))
-            print 'Accuracy = {0}% at epoch {1}'.format(acc * 100, epoch)
+                step = self.sess.run(global_step)
+
+                if step % 100 == 0:
+                    sum_op = self.sess.run(summary_op, feed_dict={inputs: test_data, labels: test_label})
+                    writer.add_summary(sum_op, global_step=self.sess.run(global_step))
+
+                if step % 1000 == 0:
+                    saver.save(self.sess, os.path.join(self.FLAGS.checkpoint_dir, 'dnn.ckpt'), step)
+
+                if step % max_train_batch_idx == 0:
+                    acc = self.sess.run(accuracy, feed_dict={inputs: test_data, labels: test_label})
+                    print 'Accuracy = {0}% at epoch {1}'.format(acc * 100, epoch)
 
     def load_network(self):
         self.global_step = tf.Variable(0, trainable=False)
