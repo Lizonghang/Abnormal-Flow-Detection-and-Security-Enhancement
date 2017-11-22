@@ -107,6 +107,8 @@ This command will read data from <code>dataset/gen\_samples.csv</code> and calcu
 <div align="center">
  <img src="img/counter-security-1.png" width="150px" height="150px">
  <img src="img/counter-security-2.png" width="150px" height="150px">
+</div>
+<div align="center">
  <img src="img/counter-security-3.png" width="150px" height="150px">
  <img src="img/counter-security-4.png" width="150px" height="150px">
  </div>
