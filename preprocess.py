@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import random
-import json
 
 
 def drop_and_concat_dummies(data, attr):

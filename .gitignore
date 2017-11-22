@@ -2,6 +2,10 @@
 dataset
 *.tar
 
+# Log and ckpt files
+*_logs
+*_ckpt
+
 # Trash
 *.pyc
 *.DS_Store

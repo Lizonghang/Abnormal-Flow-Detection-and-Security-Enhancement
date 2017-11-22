@@ -6,7 +6,7 @@ import os
 from cgan import CGAN
 
 flags = tf.app.flags
-flags.DEFINE_integer("epoch", 100, "Epoch to train [100]")
+flags.DEFINE_integer("epoch", 5, "Epoch to train [5]")
 flags.DEFINE_float("lr", 0.0001, "Learning rate for RMSProp [0.0001]")
 flags.DEFINE_float("clip", 0.01, "C of WGAN [0.01]")
 flags.DEFINE_integer("z_dim", 100, "Number of noise [100]")

@@ -100,12 +100,6 @@ class CGAN(object):
                     self.y: batch_labels
                 })
 
-                # Run g_optim twice to make sure that d_loss does not go to zero
-                self.sess.run(g_optim, feed_dict={
-                    self.z: batch_z,
-                    self.y: batch_labels
-                })
-
                 errD_fake = self.d_loss_fake.eval({
                     self.z: batch_z,
                     self.y: batch_labels
@@ -123,12 +117,18 @@ class CGAN(object):
                 print("Epoch: [%2d] [%4d/%4d], d_loss: %.8f, g_loss: %.8f" %
                       (epoch, idx, max_train_batch_idx, errD_fake + errD_real, errG))
 
-                if np.mod(counter, max_train_batch_idx) == 0:
+                if np.mod(counter, 100) == 0:
                     writer.add_summary(self.sess.run(summary_op, feed_dict={
                         self.inputs: batch_inputs,
                         self.y: batch_labels,
                         self.z: batch_z
-                    }), epoch)
+                    }), counter)
+
+                    # fake_samples = np.zeros((1024, 41))
+                    # for i in range(1024 / self.FLAGS.batch_size):
+                    #     gen_y = [random.randint(0, 1) for _ in range(self.FLAGS.batch_size)]
+                    #     fake_samples[i*self.FLAGS.batch_size:(i+1)*self.FLAGS.batch_size, :] = self.generate(gen_y)
+                    # pd.DataFrame(fake_samples).to_csv('tmp/gen_samples_{}.csv'.format(counter), index=False, header=False)
 
             saver.save(self.sess, os.path.join(self.FLAGS.checkpoint_dir, 'cgan.ckpt'), global_step=epoch)
 

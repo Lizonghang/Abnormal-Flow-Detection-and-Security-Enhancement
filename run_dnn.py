@@ -36,7 +36,6 @@ def main(_):
             os.environ["CUDA_VISIBLE_DEVICES"] = '1'
             dnn.load_network()
             samples = np.array(pd.read_csv(FLAGS.predictset, header=None))
-            _ = samples.copy()
             gen_y = samples[:, -1]
             samples = np.delete(samples, -1, 1)
             predict = dnn.predict(samples)
