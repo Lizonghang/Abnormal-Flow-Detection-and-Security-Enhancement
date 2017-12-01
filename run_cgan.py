@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 import random
+import pickle
 import os
 from cgan import CGAN
 
@@ -24,7 +25,7 @@ FLAGS = flags.FLAGS
 
 
 def main(_):
-    assert sum([FLAGS.train, FLAGS.generate]) == 1
+    # assert sum([FLAGS.train, FLAGS.generate]) == 1
 
     if not os.path.exists(FLAGS.checkpoint_dir):
         os.makedirs(FLAGS.checkpoint_dir)
@@ -32,10 +33,11 @@ def main(_):
         os.makedirs(FLAGS.logs_dir)
 
     with tf.Session() as sess:
-        cgan = CGAN(sess, FLAGS)
         if FLAGS.train:
+            cgan = CGAN(sess, FLAGS)
             cgan.train()
         elif FLAGS.generate:
+            cgan = CGAN(sess, FLAGS)
             os.environ["CUDA_VISIBLE_DEVICES"] = '1'
             if os.path.exists(FLAGS.gen_samples):
                 os.remove(FLAGS.gen_samples)
@@ -49,11 +51,19 @@ def main(_):
                 fake_samples[i*FLAGS.batch_size:(i+1)*FLAGS.batch_size, :] = cgan.generate(gen_y)
             pd.DataFrame(fake_samples).to_csv(FLAGS.gen_samples, index=False, header=False)
             print '{} samples has saved to {}'.format(gen_size, FLAGS.gen_samples)
+        else:
+            data = np.array(pd.read_csv('dataset/kddcup.train.data.preprocessed.csv'))
+            data = np.delete(data, -1, 1)
+            labels = [1] * 1600000
+            FLAGS.batch_size = data.shape[0]
+            cgan = CGAN(sess, FLAGS)
+            cgan.transfer(data, labels)
 
 
 if __name__ == '__main__':
     """
-    Fit:        python run_dcgan.py --train
-    Generate:   python run_dcgan.py --generate
+    Fit:        python run_cgan.py --train
+    Generate:   python run_cgan.py --generate
+
     """
     tf.app.run()

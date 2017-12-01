@@ -151,7 +151,7 @@ class CGAN(object):
             h1 = tf.reshape(h1, [self.FLAGS.batch_size, -1])
             h1 = tf.concat([h1, y], 1)
             assert h1.shape == [self.FLAGS.batch_size, 642]
-
+            return h1, h1
             h2 = lrelu(self.d_bn2(linear(h1, 64, 'd_h2_lin')))
             h2 = tf.concat([h2, y], 1)
             assert h2.shape == [self.FLAGS.batch_size, 66]
@@ -220,6 +220,16 @@ class CGAN(object):
         sample_z = np.random.uniform(-1, 1, [self.FLAGS.batch_size, self.FLAGS.z_dim]).astype(np.float32)
         samples = self.sess.run(self.sampler_op, feed_dict={self.z: sample_z, self.y: gen_y})
         return np.concatenate([samples, np.array(gen_y).reshape((self.FLAGS.batch_size, 1))], axis=1)
+
+    def transfer(self, inputs, y):
+        saver = tf.train.Saver(tf.global_variables())
+        if not self.load_checkpoint(saver):
+            raise Exception("[ERROR] No checkpoint file found!")
+
+        h1 = self.sess.run(self.D_logits, feed_dict={self.inputs: inputs, self.y: y})
+
+        import pandas as pd
+        pd.DataFrame(h1).to_csv('transfer.train.data.1.csv', header=None, index=False)
 
     def load_checkpoint(self, saver):
         import re
