@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from sklearn.metrics import confusion_matrix
 from ops import linear
 
 
@@ -51,12 +52,12 @@ class DNN(object):
 
         print 'Loading trainset ...'
         train_data = pd.read_csv(self.FLAGS.dataset)
-        train_label = train_data['label'].astype(np.int32).tolist()
+        train_labels = train_data['label'].astype(np.int32).tolist()
         train_data.drop('label', axis=1, inplace=True)
         train_data = train_data.as_matrix()
         print 'Loading testset ...'
         test_data = pd.read_csv(self.FLAGS.testset)
-        test_label = test_data['label'].astype(np.int32).tolist()
+        test_labels = test_data['label'].astype(np.int32).tolist()
         test_data.drop('label', axis=1, inplace=True)
         test_data = test_data.as_matrix()
         print 'Load Success'
@@ -67,21 +68,23 @@ class DNN(object):
         for epoch in range(self.FLAGS.epoch):
             for batch_idx in xrange(max_train_batch_idx):
                 batch_samples = train_data[batch_idx * self.FLAGS.batch_size: (batch_idx + 1) * self.FLAGS.batch_size, :]
-                batch_labels = train_label[batch_idx * self.FLAGS.batch_size: (batch_idx + 1) * self.FLAGS.batch_size]
+                batch_labels = train_labels[batch_idx * self.FLAGS.batch_size: (batch_idx + 1) * self.FLAGS.batch_size]
                 self.sess.run(train_op, feed_dict={inputs: batch_samples, labels: batch_labels})
 
                 step = self.sess.run(global_step)
 
-                if step % 100 == 0:
-                    sum_op = self.sess.run(summary_op, feed_dict={inputs: test_data, labels: test_label})
-                    writer.add_summary(sum_op, global_step=self.sess.run(global_step))
-
-                if step % 1000 == 0:
-                    saver.save(self.sess, os.path.join(self.FLAGS.checkpoint_dir, 'dnn.ckpt'), step)
+                # if step % 100 == 0:
+                #     sum_op = self.sess.run(summary_op, feed_dict={inputs: test_data, labels: test_label})
+                #     writer.add_summary(sum_op, global_step=self.sess.run(global_step))
 
                 if step % max_train_batch_idx == 0:
-                    acc = self.sess.run(accuracy, feed_dict={inputs: test_data, labels: test_label})
-                    print 'Accuracy = {0}% at epoch {1}'.format(acc * 100, epoch)
+                    saver.save(self.sess, os.path.join(self.FLAGS.checkpoint_dir, 'dnn.ckpt'), step)
+
+                    logits_ = self.sess.run(logits, feed_dict={inputs: test_data})
+                    predict = logits_.argmax(axis=1)
+                    err_count = sum(predict != test_labels)
+                    # print 'Error Count:', err_count
+                    print err_count
 
     def load_network(self):
         self.global_step = tf.Variable(0, trainable=False)
@@ -95,9 +98,6 @@ class DNN(object):
         self.loss = self.calculate_loss(self.logits, self.one_hot_labels)
 
         self.train_op = self.train(self.loss, self.global_step)
-
-        correct_prediction = tf.equal(tf.argmax(self.logits, 1), tf.argmax(self.one_hot_labels, 1))
-        self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         self.saver = tf.train.Saver(tf.global_variables())
 
@@ -116,8 +116,11 @@ class DNN(object):
         test_data = test_data.as_matrix()
         print 'Load Success'
 
-        acc = self.sess.run(self.accuracy, feed_dict={self.inputs: test_data, self.labels: test_labels})
-        print 'Accuracy = {0}% in test set.'.format(acc * 100)
+        logits = self.sess.run(self.logits, feed_dict={self.inputs: test_data})
+        predict = logits.argmax(axis=1)
+        accuracy = sum(predict == test_labels) / float(len(test_labels))
+        print 'Accuracy = {0}% in test set.'.format(accuracy * 100)
+        print 'Confusion Matrix:\n', confusion_matrix(test_labels, predict)
 
     def load_checkpoint(self, saver):
         ckpt = tf.train.get_checkpoint_state(self.FLAGS.checkpoint_dir)

@@ -151,7 +151,7 @@ class CGAN(object):
             h1 = tf.reshape(h1, [self.FLAGS.batch_size, -1])
             h1 = tf.concat([h1, y], 1)
             assert h1.shape == [self.FLAGS.batch_size, 642]
-            return h1, h1
+
             h2 = lrelu(self.d_bn2(linear(h1, 64, 'd_h2_lin')))
             h2 = tf.concat([h2, y], 1)
             assert h2.shape == [self.FLAGS.batch_size, 66]
@@ -194,16 +194,16 @@ class CGAN(object):
             z = tf.concat([z, y], 1)
             assert z.shape == [self.FLAGS.batch_size, self.FLAGS.z_dim+2]
 
-            h0 = tf.nn.relu(self.g_bn0(linear(z, 128, 'g_h0_lin')))
+            h0 = tf.nn.relu(self.g_bn0(linear(z, 128, 'g_h0_lin'), train=False))
             h0 = tf.concat([h0, y], 1)
             assert h0.shape == [self.FLAGS.batch_size, 130]
 
-            h1 = tf.nn.relu(self.g_bn1(linear(h0, 320, 'g_h1_lin')))
+            h1 = tf.nn.relu(self.g_bn1(linear(h0, 320, 'g_h1_lin'), train=False))
             h1 = tf.reshape(h1, [self.FLAGS.batch_size, 1, 10, 32])
             h1 = conv2d_cond_concat(h1, yb)
             assert h1.shape == [self.FLAGS.batch_size, 1, 10, 34]
 
-            h2 = tf.nn.relu(self.g_bn2(deconv1d(h1, [self.FLAGS.batch_size, 1, 20, 16], name='g_h2_conv')))
+            h2 = tf.nn.relu(self.g_bn2(deconv1d(h1, [self.FLAGS.batch_size, 1, 20, 16], name='g_h2_conv'), train=False))
             h2 = conv2d_cond_concat(h2, yb)
             assert h2.shape == [self.FLAGS.batch_size, 1, 20, 18]
 
@@ -220,16 +220,6 @@ class CGAN(object):
         sample_z = np.random.uniform(-1, 1, [self.FLAGS.batch_size, self.FLAGS.z_dim]).astype(np.float32)
         samples = self.sess.run(self.sampler_op, feed_dict={self.z: sample_z, self.y: gen_y})
         return np.concatenate([samples, np.array(gen_y).reshape((self.FLAGS.batch_size, 1))], axis=1)
-
-    def transfer(self, inputs, y):
-        saver = tf.train.Saver(tf.global_variables())
-        if not self.load_checkpoint(saver):
-            raise Exception("[ERROR] No checkpoint file found!")
-
-        h1 = self.sess.run(self.D_logits, feed_dict={self.inputs: inputs, self.y: y})
-
-        import pandas as pd
-        pd.DataFrame(h1).to_csv('transfer.train.data.1.csv', header=None, index=False)
 
     def load_checkpoint(self, saver):
         import re

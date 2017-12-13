@@ -84,6 +84,7 @@ def del_class(combined, class_num):
     idx_list = idx_list[idx_list != 0]
     return combined.iloc[idx_list]
 
+print 'Loading data ...'
 train_data = pd.read_csv('dataset/kddcup.train.data.csv')
 test_data = pd.read_csv('dataset/kddcup.test.data.csv')
 combined = train_data.append(test_data)
@@ -91,6 +92,7 @@ combined = train_data.append(test_data)
 del train_data
 del test_data
 
+print 'Filtering DoS ...'
 combined = parse_label(combined, 'label')
 combined = del_class(combined, 2)
 combined = del_class(combined, 3)
@@ -104,10 +106,12 @@ def symbols_to_step(combined, attr):
     combined[attr] = map(lambda c: symbols.index(c) * step, combined[attr])
 
 
+print 'Processing discrete attributes ...'
 symbols_to_step(combined, 'protocol_type')
 symbols_to_step(combined, 'service')
 symbols_to_step(combined, 'flag')
 
+print 'Normalizing continous attributes ...'
 combined = normalize(combined, 'duration')
 combined = normalize(combined, 'src_bytes')
 combined = normalize(combined, 'dst_bytes')
@@ -125,16 +129,17 @@ combined = normalize(combined, 'srv_count')
 combined = normalize(combined, 'dst_host_count')
 combined = normalize(combined, 'dst_host_srv_count')
 
+print 'Drop num_outbound_cmds'
 combined.drop('num_outbound_cmds', axis=1, inplace=True)
 
 headers = combined.columns
 
-# Balance class
 class_0 = get_class(combined, 0)
 class_1 = get_class(combined, 1)
 
 del combined
 
+print 'Remove same samples ...'
 class_0 = set(map(tuple, np.array(class_0)))
 class_0 = np.array(list(class_0))
 class_0 = pd.DataFrame(class_0)
@@ -143,19 +148,20 @@ class_1 = set(map(tuple, np.array(class_1)))
 class_1 = np.array(list(class_1))
 class_1 = pd.DataFrame(class_1)
 
-test_random_samples = random.sample(xrange(class_0.shape[0]), np.mod(class_0.shape[0], 100000))
+print 'Balancing class ...'
+test_random_samples = random.sample(xrange(class_0.shape[0]), 200000)
 test_data_from_0 = class_0.iloc[test_random_samples]
 class_0.drop(test_random_samples, axis=0, inplace=True)
+class_0.reset_index()
+class_0 = class_0.iloc[random.sample(xrange(659181), 10000)]
 
-test_random_samples = random.sample(xrange(class_1.shape[0]), np.mod(class_1.shape[0], 100000))
+test_random_samples = random.sample(xrange(class_1.shape[0]), 200000)
 test_data_from_1 = class_1.iloc[test_random_samples]
 class_1.drop(test_random_samples, axis=0, inplace=True)
+class_1 = class_1.iloc[random.sample(xrange(57460), 10000)]
 
 test_data_processed = test_data_from_0.append(test_data_from_1)
 test_data_processed = test_data_processed.sample(frac=1)
-
-class_1 = class_1.append(class_1)
-class_1 = class_1.append(class_1)
 
 train_data_processed = class_0.append(class_1)
 train_data_processed = train_data_processed.sample(frac=1)
@@ -166,7 +172,7 @@ def symbols_add_noise(combined, attr):
     step = 1.0 / len(symbols)
     combined[attr] = map(lambda c: c + random.random() * step, combined[attr])
 
-
+print 'Add noise to discrete attributes ...'
 symbols_add_noise(train_data_processed, 1)  # protocol_type
 symbols_add_noise(train_data_processed, 2)  # service
 symbols_add_noise(train_data_processed, 3)  # flag
@@ -174,5 +180,6 @@ symbols_add_noise(test_data_processed, 1)
 symbols_add_noise(test_data_processed, 2)
 symbols_add_noise(test_data_processed, 3)
 
-train_data_processed.to_csv('dataset/kddcup.train.data.preprocessed.csv', index=False, header=headers)
-test_data_processed.to_csv('dataset/kddcup.test.data.preprocessed.csv', index=False, header=headers)
+print 'Saving ...'
+train_data_processed.to_csv('dataset/kddcup.train.data.sub.csv', index=False, header=headers)
+test_data_processed.to_csv('dataset/kddcup.test.data.sub.csv', index=False, header=headers)
