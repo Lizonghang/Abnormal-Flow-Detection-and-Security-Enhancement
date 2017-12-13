@@ -70,22 +70,22 @@ def main(_):
                 except Exception:
                     print 'No counter samples found'
 
-            # while num_1 < FLAGS.gen_size / 2:
-            #     fake_samples = np.zeros((FLAGS.batch_size, 41))
-            #     gen_y = [1 for _ in range(FLAGS.batch_size)]
-            #     fake_samples[0:FLAGS.batch_size, :] = cgan.generate(gen_y)
-            #     pd.DataFrame(fake_samples).to_csv('dataset/gen_samples.csv', index=False, header=False)
-            #
-            #     os.system('python run_dnn.py --predict')
-            #
-            #     try:
-            #         counter_samples = np.array(pd.read_csv('dataset/gen_samples.csv', header=None))
-            #         counter_samples = rfc.drop_invalid(counter_samples[:, :40], counter_samples[:, -1])
-            #         pd.DataFrame(counter_samples).to_csv('dataset/gen_samples.csv', index=False, header=False)
-            #         num_1, num_0 = collect_samples()
-            #         print 'Collecting Type 1->0: {}'.format(num_1)
-            #     except Exception:
-            #         print 'No counter samples found'
+            while num_1 < FLAGS.gen_size / 2:
+                fake_samples = np.zeros((FLAGS.batch_size, 41))
+                gen_y = [1 for _ in range(FLAGS.batch_size)]
+                fake_samples[0:FLAGS.batch_size, :] = cgan.generate(gen_y)
+                pd.DataFrame(fake_samples).to_csv('dataset/gen_samples.csv', index=False, header=False)
+
+                os.system('python run_dnn.py --predict')
+
+                try:
+                    counter_samples = np.array(pd.read_csv('dataset/gen_samples.csv', header=None))
+                    counter_samples = rfc.drop_invalid(counter_samples[:, :40], counter_samples[:, -1])
+                    pd.DataFrame(counter_samples).to_csv('dataset/gen_samples.csv', index=False, header=False)
+                    num_1, num_0 = collect_samples()
+                    print 'Collecting Type 1->0: {}'.format(num_1)
+                except Exception:
+                    print 'No counter samples found'
 
 
 if __name__ == '__main__':
